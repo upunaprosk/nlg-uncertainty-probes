@@ -19,13 +19,38 @@ We provide several methods in `utils.py` to transform the WMT, ASSET, and DailyD
 WritingPrompts can be converted using the python file `convert_writingprompts.py`, which also allows to filter data instances 
 according to minimum number of story completions available for each prompt.
 
+
 ## Fine-tuning
 For convenience and reproducibility, we provide the fine-tuning scripts we used for text simplification and 
 story generation: `finetune_flanT5.py` and `finetune_gpt.py`. We recommend using up-to-date Huggingface code; see, for
 example, the Huggingface [trainers documentation](https://huggingface.co/docs/transformers/training) and 
 [finetuning script](https://github.com/huggingface/transformers/blob/main/examples/pytorch/language-modeling/run_clm.py).
 
+## Code for loading data and pre-processing
+
+```
+!git clone https://github.com/upunaprosk/nlg-uncertainty-probes.git
+%cd nlg-uncertainty-probes
+!git clone https://github.com/facebookresearch/analyzing-uncertainty-nmt
+!gunzip analyzing-uncertainty-nmt/wmt14-en-de.extra_refs.gz
+!gunzip analyzing-uncertainty-nmt/wmt14-en-fr.extra_refs.gz
+!git clone https://github.com/facebookresearch/asset.git
+!wget https://iitmnlp.github.io/DailyDialog-plusplus/dataset/dev.json
+!curl https://dl.fbaipublicfiles.com/fairseq/data/writingPrompts.tar.gz | tar xvzf -
+!mkdir processed_data
+!python convert_writingprompts.py --source_path "writingPrompts/test.wp_source" --target_path "writingPrompts/test.wp_target" --output_path "./processed_data/writing_prompts.json"
+```
+
+```
+from utils import *
+
+transform_wmt13_data(input_path="./analyzing-uncertainty-nmt/wmt14-en-de.extra_refs", output_path="./processed_data/wmt14-en-de.json")
+transform_asset_dataset(input_dir="./asset/dataset/",output_dir="./processed_data/")
+transform_dailydialog(input_path="dev.json",output_path="./processed_data/dailydialog.json")
+```
+
 ## Generation
+
 You can launch the generation script by providing a configuration file in json format:
 ```
 python src/generate.py --configs_path generation_config.json
