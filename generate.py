@@ -65,7 +65,7 @@ def main(args):
 
         context_ids = tokenizer.encode(context, return_tensors="pt").to(device)
         response_ids = model.generate(
-            context_ids,
+            input_ids=context_ids,
             max_new_tokens=args.max_length,
             pad_token_id=tokenizer.eos_token_id,
             do_sample=bool(args.do_sample),
