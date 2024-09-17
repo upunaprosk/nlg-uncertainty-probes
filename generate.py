@@ -16,13 +16,14 @@ from transformers import (
 )
 
 from utils import set_seeds, load_jsonl, load_wmt14_data
-
+from auto_gptq import AutoGPTQForCausalLM
 
 def main(args):
     print(args)
     print("Initializing model and loading data...")
     device = torch.cuda.current_device() if torch.cuda.is_available() else "cpu"
     print(device)
+    model = None
     if args.task == "translation":
         try:
             # FairSeq Machine Translation
@@ -32,8 +33,11 @@ def main(args):
             tokenizer = AutoTokenizer.from_pretrained(args.model_name)
             model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name).to(device)
     elif args.task in ["dialogue", "story_generation"]:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-        model = AutoModelForCausalLM.from_pretrained(args.model_name).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name, use_fast=True)
+        if args.quantized:
+            model = AutoGPTQForCausalLM.from_quantized(args.model_name).to(device)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(args.model_name).to(device)
     elif args.task == "simplification":
         tokenizer = T5Tokenizer.from_pretrained(args.model_name)
         model = T5ForConditionalGeneration.from_pretrained(args.model_name, device_map="auto")
@@ -123,6 +127,11 @@ if __name__ == "__main__":
         "--model_name",
         type=str,
         help="Name of the huggingface model to be used.",
+    )
+    parser.add_argument(
+        "--quantized",
+        action="store_true",
+        help="Whether to load the quantized model.",
     )
     parser.add_argument(
         "--do_sample",

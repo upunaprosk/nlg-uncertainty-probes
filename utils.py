@@ -77,15 +77,19 @@ def transform_wmt13_data(input_path: str, output_path: str) -> None:
 def _transform_dailydialog(lines: List[str]) -> List[Dict[str, Any]]:
     data = list()
     for i, line in enumerate(lines):
-        utterances = line.split("__eou__")
-        utterances = [
-            re.sub(r"""\s([?.!,:"'](?:\s|$))""", r"\1", utterance).strip()
-            for utterance in utterances
-        ]
+
+        # utterances = line.split("__eou__")
+        json_line=json.loads(line)
+        # utterances = [
+        #     re.sub(r"""\s([?.!,:"'](?:\s|$))""", r"\1", utterance).strip()
+        #     for utterance in utterances
+        # ]
+        contexts=[re.sub(r"""\s([?.!,:"'](?:\s|$))""", r"\1", context).strip() for context in json_line['context']]
+        positive_responses=[re.sub(r"""\s([?.!,:"'](?:\s|$))""", r"\1", p_response).strip() for p_response in json_line['positive_responses']]
         data.append(
             {
-                "context": utterances[:-2],
-                "positive_responses": [utterances[-2]],
+                "context": contexts,
+                "positive_responses": positive_responses,
                 "id": i,
             }
         )
