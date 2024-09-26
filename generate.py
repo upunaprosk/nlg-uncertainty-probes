@@ -16,7 +16,6 @@ from transformers import (
 )
 
 from utils import set_seeds, load_jsonl, load_wmt14_data
-from auto_gptq import AutoGPTQForCausalLM
 
 def main(args):
     print(args)
@@ -34,10 +33,7 @@ def main(args):
             model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name).to(device)
     elif args.task in ["dialogue", "story_generation"]:
         tokenizer = AutoTokenizer.from_pretrained(args.model_name, use_fast=True)
-        if args.quantized:
-            model = AutoGPTQForCausalLM.from_quantized(args.model_name).to(device)
-        else:
-            model = AutoModelForCausalLM.from_pretrained(args.model_name).to(device)
+        model = AutoModelForCausalLM.from_pretrained(args.model_name, device_map="auto") # also supports quantized models
     elif args.task == "simplification":
         tokenizer = T5Tokenizer.from_pretrained(args.model_name)
         model = T5ForConditionalGeneration.from_pretrained(args.model_name, device_map="auto")
@@ -69,12 +65,12 @@ def main(args):
             max_new_tokens=args.max_length,
             pad_token_id=tokenizer.eos_token_id,
             do_sample=bool(args.do_sample),
-            top_k=args.top_k,
-            top_p=args.top_p,
-            typical_p=args.typical_p,
-            num_beams=args.n_beams,
-            temperature=args.temperature,
-            num_return_sequences=args.n_samples,
+            # top_k=args.top_k,
+            # top_p=args.top_p,
+            # typical_p=args.typical_p,
+            # num_beams=args.n_beams,
+            # temperature=args.temperature,
+            # num_return_sequences=args.n_samples,
         )
         # some models return input_output, others just output
         response_ids = (
@@ -129,11 +125,6 @@ if __name__ == "__main__":
         help="Name of the huggingface model to be used.",
     )
     parser.add_argument(
-        "--quantized",
-        action="store_true",
-        help="Whether to load the quantized model.",
-    )
-    parser.add_argument(
         "--do_sample",
         action="store_true",
         help="Whether the decoding algorithm requires sampling.",
@@ -147,7 +138,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_length",
         type=int,
-        default=100,
+        default=3000,
         help="The maximum number tokens of a response.",
     )
     parser.add_argument(
